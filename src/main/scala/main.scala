@@ -19,10 +19,9 @@ object main {
     os.remove.all(data)
     os.makeDir(data)
 
-    val changed = Locked(mutable.Set[os.Path]())
-    val events = Locked(mutable.Buffer[(String,Any)]())
 
-    os.watch.watch(Seq(data), s => changed(_.addAll(s)), (w,a) => events(_.append((w,a))))
+
+
 
     (0 to 1000000).foreach { i =>
       println(i)
@@ -32,16 +31,15 @@ object main {
         os.write(data / "r" / s / s"file_$s", s)
       }
 
-      while (changed(_.size) < n_events) {
-        Thread.sleep(1)
-      }
-      changed(_.clear())
-      events(_.clear())
+      val changed = Locked(mutable.Set[os.Path]())
+      val events = Locked(mutable.Buffer[(String,Any)]())
+
+      val w = os.watch.watch(Seq(data), s => changed(_.addAll(s)), (w,a) => events(_.append((w,a))))
 
       os.remove.all(data / "r")
 
       var iter = 0
-      while ((changed(_.size) < n_events) && (iter < 10000)) {
+      while ((changed(_.size) < n_events) && (iter < 20000)) {
         Thread.sleep(1)
         iter += 1
       }
@@ -90,8 +88,9 @@ object main {
         }
         return
       }
-      changed(_.clear())
-      events(_.clear())
+
+      w.close()
+      
     }
   }
 
