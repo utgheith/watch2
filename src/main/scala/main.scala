@@ -69,7 +69,7 @@ object main {
               k.name match {
                 case "ENTRY_DELETE" =>
                   contexts.foreach { p =>
-                    println(s" DELETE $p")
+                    println(s"  DELETE $p")
                   }
                 case _ =>
               }
@@ -78,7 +78,13 @@ object main {
             println(s"    CANCEL $a")
 
           case ("TRIGGER",a) =>
-            println(s"        TRIGGER $a")
+            println(s"    TRIGGER $a")
+            a.asInstanceOf[Set[(os.Path,Boolean)]].toList.sortBy(_._1).foreach { case (p,b) =>
+              println(s"        ($p,$b)")
+            }
+
+          case ("WATCH",a) =>
+            println(s"    WATCH $a")
 
           case ("WATCH CURRENT",_) =>
 
