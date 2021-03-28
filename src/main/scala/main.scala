@@ -1,4 +1,4 @@
-import java.nio.file.{StandardWatchEventKinds, WatchEvent, WatchService}
+import java.nio.file.WatchEvent
 import scala.collection.mutable
 
 object main {
@@ -16,6 +16,13 @@ object main {
   val names = ('a' to 'z').map(_.toString)
   val n_events = names.size * 2 + 1
 
+
+  case class Locked[A <: AnyRef](it : A) {
+    def apply[B](f: A => B): B = it.synchronized {
+      f(it)
+    }
+  }
+
   def main(args: Array[String]): Unit = {
     val data = os.pwd / "data"
 
@@ -23,10 +30,10 @@ object main {
     os.remove.all(data)
     os.makeDir(data)
 
-    val changed = mutable.Set[os.Path]()
-    val events = mutable.Buffer[(String,Any)]()
+    val changed_ = Locked(mutable.Set[os.Path]())
+    val events_ = Locked(mutable.Buffer[(String,Any)]())
 
-    os.watch.watch(Seq(data), changed.addAll, (w,a) => events.append((w,a)))
+    os.watch.watch(Seq(data), s => changed_(_.addAll(s)), (w,a) => events_(_.append((w,a))))
 
     (0 to 1000000).foreach { i =>
       println(i)
@@ -36,30 +43,33 @@ object main {
         os.write(data / "r" / s / s, s)
       }
 
-      while (changed.size != n_events) {
+      while (changed_(_.size) < n_events) {
         Thread.sleep(1)
       }
-      changed.clear()
-      events.clear()
+      changed_(_.clear())
+      events_(_.clear())
 
       os.remove.all(data / "r")
 
       var iter = 0
-      while ((changed.size != n_events) && (iter < 10000)) {
+      while ((changed_(_.size) < n_events) && (iter < 10000)) {
         Thread.sleep(1)
         iter += 1
       }
-      if (changed.size != n_events) {
-        println(s"size = ${changed.size}")
-        changed.toList.sorted.foreach(p => println(s" ${p.relativeTo(data)}"))
+
+      val changed_list = changed_(_.toList).sorted
+      val event_list = events_(_.toList)
+      if (changed_list.size != n_events) {
+        println(s"size = ${changed_list.size}")
+        changed_list.foreach(p => println(s" ${p.relativeTo(data)}"))
         println("raw events")
-        events.foreach { case(e,a) =>
+        event_list.foreach { case(e,a) =>
           show(e,a)
         }
         println("delete events")
         var base: os.Path = null
         var contexts: Seq[os.Path] = Seq()
-        events.foreach {
+        event_list.foreach {
           case ("WATCH KEY",_) =>
           case ("WATCH KEY0",_) =>
           case ("WATCH PATH",a) =>
@@ -91,8 +101,8 @@ object main {
         }
         return
       }
-      changed.clear()
-      events.clear()
+      changed_(_.clear())
+      events_(_.clear())
     }
   }
 
