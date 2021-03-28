@@ -47,8 +47,14 @@ object main {
 
       os.remove.all(data / "r")
 
-      while (changed.size != 53) {
+      var iter = 0
+      while ((changed.size != 53) && (iter < 10000)) {
         Thread.sleep(1)
+        iter += 1
+      }
+      if (changed.size != 53) {
+        println(s"size = ${changed.size}")
+        changed.toList.sorted.foreach(p => println(s" ${p.relativeTo(data)}"))
       }
       changed.clear()
     }
