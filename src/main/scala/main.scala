@@ -78,7 +78,7 @@ object main {
             println(s"    CANCEL $a")
 
           case ("TRIGGER",a) =>
-            println(s"    TRIGGER $a")
+            println(s"    TRIGGER")
             a.asInstanceOf[Set[os.Path]].toList.sorted.foreach { p =>
               println(s"      $p")
             }
