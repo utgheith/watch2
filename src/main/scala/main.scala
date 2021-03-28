@@ -79,8 +79,8 @@ object main {
 
           case ("TRIGGER",a) =>
             println(s"    TRIGGER $a")
-            a.asInstanceOf[Set[(os.Path,Boolean)]].toList.sortBy(_._1).foreach { case (p,b) =>
-              println(s"        ($p,$b)")
+            a.asInstanceOf[Set[os.Path]].toList.sorted.foreach { p =>
+              println(s"      $p")
             }
 
           case ("WATCH",a) =>
