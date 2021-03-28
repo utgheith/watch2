@@ -55,6 +55,7 @@ object main {
       if (changed.size != 53) {
         println(s"size = ${changed.size}")
         changed.toList.sorted.foreach(p => println(s" ${p.relativeTo(data)}"))
+        return 
       }
       changed.clear()
     }
