@@ -9,7 +9,7 @@ case class Locked[A <: AnyRef](it : A) {
 
 object main {
 
-  private val names = ('a' to 'z').map(_.toString)
+  private val names = (0 to 999).map(n => f"$n%04d")
   private val n_events = names.size * 2 + 1
 
   def main(args: Array[String]): Unit = {
@@ -27,8 +27,9 @@ object main {
       println(i)
 
       names.foreach { s =>
-        os.makeDir.all(data / "r" / s)
-        os.write(data / "r" / s / s"file_$s", s)
+        val dir_name = s"d_$s"
+        os.makeDir.all(data / "r" / dir_name )
+        os.write(data / "r" / dir_name / s"file_$s", s)
       }
 
       val changed = Locked(mutable.Set[os.Path]())
@@ -84,7 +85,7 @@ object main {
             }
 
           case ("WATCH",a) =>
-            println(s"    WATCH $a")
+            println(s"  WATCH $a")
 
           case ("WATCH CURRENT",_) =>
 
