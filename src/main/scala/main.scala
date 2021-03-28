@@ -34,15 +34,19 @@ object main {
     (0 to 1000000).foreach { i =>
       println(i)
 
-      ('a' to 'z').foreach { n => os.makeDir.all(data / "r" / n.toString) }
+      ('a' to 'z').foreach { n =>
+        val s = n.toString
+        os.makeDir.all(data / "r" / s)
+        os.write(data / "r" / s / s, s)
+      }
 
-      while (changed.size != 27) {
+      while (changed.size != 53) {
         Thread.sleep(1)
       }
 
       os.remove.all(data / "r")
 
-      while (changed.size != 27) {
+      while (changed.size != 53) {
         Thread.sleep(1)
       }
     }
