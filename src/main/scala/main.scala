@@ -1,27 +1,16 @@
 import java.nio.file.WatchEvent
 import scala.collection.mutable
 
+case class Locked[A <: AnyRef](it : A) {
+  def apply[B](f: A => B): B = it.synchronized {
+    f(it)
+  }
+}
+
 object main {
 
-
-
-  def show(what: String, data: Any) : Unit = {
-    val d = data match {
-      case a: Array[_] => a.toList.toString
-      case x => s"$x : ${x.getClass.getName}"
-    }
-    println(s"  $what $d")
-  }
-
-  val names = ('a' to 'z').map(_.toString)
-  val n_events = names.size * 2 + 1
-
-
-  case class Locked[A <: AnyRef](it : A) {
-    def apply[B](f: A => B): B = it.synchronized {
-      f(it)
-    }
-  }
+  private val names = ('a' to 'z').map(_.toString)
+  private val n_events = names.size * 2 + 1
 
   def main(args: Array[String]): Unit = {
     val data = os.pwd / "data"
@@ -30,41 +19,41 @@ object main {
     os.remove.all(data)
     os.makeDir(data)
 
-    val changed_ = Locked(mutable.Set[os.Path]())
-    val events_ = Locked(mutable.Buffer[(String,Any)]())
+    val changed = Locked(mutable.Set[os.Path]())
+    val events = Locked(mutable.Buffer[(String,Any)]())
 
-    os.watch.watch(Seq(data), s => changed_(_.addAll(s)), (w,a) => events_(_.append((w,a))))
+    os.watch.watch(Seq(data), s => changed(_.addAll(s)), (w,a) => events(_.append((w,a))))
 
     (0 to 1000000).foreach { i =>
       println(i)
 
       names.foreach { s =>
         os.makeDir.all(data / "r" / s)
-        os.write(data / "r" / s / s, s)
+        os.write(data / "r" / s / s"file_$s", s)
       }
 
-      while (changed_(_.size) < n_events) {
+      while (changed(_.size) < n_events) {
         Thread.sleep(1)
       }
-      changed_(_.clear())
-      events_(_.clear())
+      changed(_.clear())
+      events(_.clear())
 
       os.remove.all(data / "r")
 
       var iter = 0
-      while ((changed_(_.size) < n_events) && (iter < 10000)) {
+      while ((changed(_.size) < n_events) && (iter < 10000)) {
         Thread.sleep(1)
         iter += 1
       }
 
-      val changed_list = changed_(_.toList).sorted
-      val event_list = events_(_.toList)
+      val changed_list = changed(_.toList).sorted
+      val event_list = events(_.toList)
       if (changed_list.size != n_events) {
         println(s"size = ${changed_list.size}")
         changed_list.foreach(p => println(s" ${p.relativeTo(data)}"))
         println("raw events")
         event_list.foreach { case(e,a) =>
-          show(e,a)
+          println(s"  $e $a")
         }
         println("delete events")
         var base: os.Path = null
@@ -101,8 +90,8 @@ object main {
         }
         return
       }
-      changed_(_.clear())
-      events_(_.clear())
+      changed(_.clear())
+      events(_.clear())
     }
   }
 
