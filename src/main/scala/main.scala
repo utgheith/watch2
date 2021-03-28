@@ -43,12 +43,14 @@ object main {
       while (changed.size != 53) {
         Thread.sleep(1)
       }
+      changed.clear()
 
       os.remove.all(data / "r")
 
       while (changed.size != 53) {
         Thread.sleep(1)
       }
+      changed.clear()
     }
   }
 
